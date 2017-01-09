@@ -1,6 +1,6 @@
 {
   "name": "geotool-detector",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Geotool - geo-location detector",
   "main": "index.js",
   "scripts": {
@@ -9,6 +9,19 @@
   "author": "acegik",
   "license": "ISC",
   "dependencies": {
+    "debug": "^2.6.0",
     "jquery": "^1.11.2"
+  },
+  "devDependencies": {
+    "browserify": "^13.3.0",
+    "gulp": "^3.9.1",
+    "gulp-babel": "^6.1.2",
+    "gulp-browserify": "^0.5.1",
+    "gulp-clean": "^0.3.2",
+    "gulp-concat": "^2.6.1",
+    "gulp-plumber": "^1.1.0",
+    "gulp-uglify": "^2.0.0",
+    "gulp-webserver": "^0.9.1",
+    "run-sequence": "^1.2.2"
   }
 }

@@ -1,0 +1,34 @@
+<!DOCTYPE>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>geotool-detector</title>
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+	<script type="text/javascript" src="js/index.js"></script>
+	<script>
+		// enable debug
+		localStorage.debug = 'geotool*';
+		
+		// create geodetector instance 
+		var geodetector = new geotool.Detector();
+		
+		// request detect() method 
+		geodetector.detect({}, function(error, result) {
+		    if (error) {
+		        console.log("Error: %s", JSON.stringify(error));
+		    }
+		    console.log("Detection result: %s", JSON.stringify(result));
+		    result = result || {};
+		    result.country_code = result.country_code || result.country;
+		    if (result.country_code == 'VN' || result.country_code == 'vn') {
+		        // do something for VN (set locale ~ vi, for example) 
+		    } else {
+		        // default for the others 
+		    }
+		});
+	</script>
+</head>
+<body class="loading"></body>
+</html>
