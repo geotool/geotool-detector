@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.15.3",
-    "debug": "^2.6.0",
+    "geotool-commons": "^0.1.0",
     "when": "^3.7.7"
   },
   "devDependencies": {
