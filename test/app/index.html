@@ -14,8 +14,22 @@
 		// create geodetector instance 
 		var geodetector = new geotool.Detector();
 		
-		// request detect() method 
-		geodetector.detect({}, function(error, result) {
+		// request detect() method
+		var customizedCheckers = [{
+			url: 'https://freegeoip.net/json/',
+			transform: function(data) {
+				return { country_code: data && data.country_code }
+			}
+		}, {
+			url: 'https://freegeoip.net/json/',
+			transform: function(data) {
+				return { country_code: data && data.country_code }
+			}
+		}];
+
+		geodetector.detect({
+			// geoipCheckers: customizedCheckers
+		}, function(error, result) {
 		    if (error) {
 		        console.log("Error: %s", JSON.stringify(error));
 		    }
