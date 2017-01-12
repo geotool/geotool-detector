@@ -1,6 +1,6 @@
 {
   "name": "geotool-detector",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Geotool - geo-location detector",
   "main": "index.js",
   "scripts": {
