@@ -64,7 +64,10 @@ gulp.task('default', function(callback) {
 		gulp.src('./build/' + envName).pipe(webserver({
 			host: '0.0.0.0',
 			port: 8888,
-			livereload: true,
+			livereload: {
+				enable: true, 
+				port: 38888
+			},
 			open: (function() {
 				return 'http://localhost:8888/index.html'
 			})()
