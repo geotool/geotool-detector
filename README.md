@@ -19,7 +19,7 @@ var Detector = require('geotool-detector');
 ### In browser
 
 ```html
-<script src="geotool-detector.js" charset="utf-8"></script>
+<script src="dist/js/geotool-detector.js" charset="utf-8"></script>
 ```
 
 Declare detector class:
@@ -36,11 +36,13 @@ var Detector = geotool.Detector;
 var detector = new Detector();
 
 // request detect() method
-geodetector.detect({}, function(error, result) {
+geodetector.detect({
+	timeout: 5000 // timeout in 5 seconds
+}, function(error, result) {
 	if (error) {
 		console.log("Error: %s", JSON.stringify(error));
 	}
-	var country_code = result && (result.country_code || result.country);
+	var country_code = result && result.country_code;
 	if (country_code == 'VN' || country_code == 'vn') {
 		// do something for VN (set locale ~ vi, for example)
 	} else {
