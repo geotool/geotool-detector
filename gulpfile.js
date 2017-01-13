@@ -6,6 +6,7 @@ var browserify   = require('gulp-browserify');
 var clean        = require('gulp-clean');
 var concat       = require('gulp-concat');
 var plumber      = require('gulp-plumber');
+var rename       = require('gulp-rename');
 var uglify       = require('gulp-uglify');
 var webserver    = require('gulp-webserver');
 var runSequence  = require('run-sequence');
@@ -44,33 +45,41 @@ gulp.task('browserify', function() {
 		return gulp.src('build/debug/js/index.js')
 			.pipe(plumber())
 			.pipe(browserify())
+			.pipe(rename('geotool-detector.js'))
 			.pipe(gulp.dest('build/debug/js'));
 });
 
 gulp.task('uglify', function() {
-		return gulp.src('build/debug/js/index.js')
-			.pipe(plumber())
+		return gulp.src('build/debug/js/geotool-detector.js')
 			.pipe(concat('geotool-detector.min.js'))
 			.pipe(uglify())
 			.pipe(gulp.dest('build/debug/js'));
 });
 
-gulp.task('default', function(callback) {
-	runSequence('clean', ['copy-js', 'copy-html'], 'babel', 'browserify', 'uglify', callback);
+gulp.task('deploy', function() {
+	return gulp.src([
+			'build/debug/js/geotool-detector*.js',
+			'build/debug/index.html'
+		], { base: 'build/debug' })
+		.pipe(gulp.dest('dist'));
 });
 
-['debug'].forEach(function(envName) {
-	gulp.task('run-' + envName, function() {
-		gulp.src('./build/' + envName).pipe(webserver({
-			host: '0.0.0.0',
-			port: 8888,
-			livereload: {
-				enable: true, 
-				port: 38888
-			},
-			open: (function() {
-				return 'http://localhost:8888/index.html'
-			})()
-		}));
-	});
+gulp.task('build', function(callback) {
+	runSequence('clean', ['copy-js', 'copy-html'], 'babel', 'browserify', 'uglify', 'deploy', callback);
 });
+
+gulp.task('run', function() {
+	gulp.src('./dist').pipe(webserver({
+		host: '0.0.0.0',
+		port: 8888,
+		livereload: {
+			enable: true,
+			port: 38888
+		},
+		open: (function() {
+			return 'http://localhost:8888/index.html'
+		})()
+	}));
+});
+
+gulp.task('default', ['build', 'run']);
