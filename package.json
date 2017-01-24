@@ -1,6 +1,6 @@
 {
   "name": "geotool-detector",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Geotool - geo-location detector",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.15.3",
-    "geotool-commons": "^0.1.0",
+    "geotool-commons": "^0.1.4",
     "when": "^3.7.7"
   },
   "devDependencies": {
