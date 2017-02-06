@@ -9,7 +9,7 @@ module.exports = global.geotool.Detector;
 
 var axios = require('axios');
 var when = require('when');
-var debug = require('geotool-commons').debug('geotool:detector');
+var debug = require('geotool-commons').getDebugger('geotool:detector');
 
 var Detector = function Detector(params) {
 	debug && debug(' + constructor begin ...');
@@ -238,7 +238,7 @@ var Detector = function Detector(params) {
 
 module.exports = Detector;
 
-},{"axios":3,"geotool-commons":31,"when":53}],3:[function(require,module,exports){
+},{"axios":3,"geotool-commons":31,"when":56}],3:[function(require,module,exports){
 module.exports = require('./lib/axios');
 },{"./lib/axios":5}],4:[function(require,module,exports){
 (function (process){
@@ -421,7 +421,7 @@ module.exports = function xhrAdapter(config) {
 };
 
 }).call(this,require("+7ZJp0"))
-},{"+7ZJp0":35,"../core/createError":11,"./../core/settle":14,"./../helpers/btoa":18,"./../helpers/buildURL":19,"./../helpers/cookies":21,"./../helpers/isURLSameOrigin":23,"./../helpers/parseHeaders":25,"./../utils":27}],5:[function(require,module,exports){
+},{"+7ZJp0":38,"../core/createError":11,"./../core/settle":14,"./../helpers/btoa":18,"./../helpers/buildURL":19,"./../helpers/cookies":21,"./../helpers/isURLSameOrigin":23,"./../helpers/parseHeaders":25,"./../utils":27}],5:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -970,7 +970,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 }).call(this,require("+7ZJp0"))
-},{"+7ZJp0":35,"./adapters/http":4,"./adapters/xhr":4,"./helpers/normalizeHeaderName":24,"./utils":27}],17:[function(require,module,exports){
+},{"+7ZJp0":38,"./adapters/http":4,"./adapters/xhr":4,"./helpers/normalizeHeaderName":24,"./utils":27}],17:[function(require,module,exports){
 'use strict';
 
 module.exports = function bind(fn, thisArg) {
@@ -1966,7 +1966,7 @@ function localstorage() {
 }
 
 }).call(this,require("+7ZJp0"))
-},{"+7ZJp0":35,"./debug":30}],30:[function(require,module,exports){
+},{"+7ZJp0":38,"./debug":30}],30:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -2169,35 +2169,209 @@ function coerce(val) {
 
 },{"ms":28}],31:[function(require,module,exports){
 (function (global){
+'use strict';
+
+var Debug = require('./lib/debug');
+var Logger = require('./lib/logger');
+var Loadsync = require('loadsync');
+
+var logger = null, loadsync = null;
+
 global.geotool = global.geotool || {};
-global.geotool.debug = global.geotool.debug || require('./lib/debug');
-global.geotool.loadsync = global.geotool.loadsync || require('loadsync');
+
+global.geotool.getDebugger = function(params) {
+	return Debug(params);
+}
+
+global.geotool.getLogger = function(params) {
+	return (logger = logger || new Logger(params));
+}
+
+global.geotool.getLoadsync = function(params) {
+	return (loadsync = loadsync || new Loadsync(params));
+}
+
 module.exports = global.geotool;
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lib/debug":32,"loadsync":34}],32:[function(require,module,exports){
+},{"./lib/debug":32,"./lib/logger":33,"loadsync":34}],32:[function(require,module,exports){
+(function (process,global){
 'use strict';
 
 var debugPkg = require('debug');
-var DEBUG_ENABLED = localStorage.debug && (localStorage.debug.search('geotool') >= 0);
+
+var DEBUG_ENABLED = process && process.env && process.env.DEBUG && (process.env.DEBUG.length > 0) || 
+		global.localStorage && global.localStorage.debug && (global.localStorage.debug.length > 0);
+
+module.exports = function(pkgName, opts) {
+	opts = opts || {};
+	if (opts.isNoopAvailable) {
+		var log = DEBUG_ENABLED ? debugPkg(pkgName) : function() {};
+		log.isEnabled = isEnabled;
+		return log;
+	}
+	return DEBUG_ENABLED ? debugPkg(pkgName) : null;
+};
+
+}).call(this,require("+7ZJp0"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"+7ZJp0":38,"debug":29}],33:[function(require,module,exports){
+'use strict';
+
+var Logger = function Logger(params) {
+	var refs = this.__state__ = this.__state__ || {};
+
+	Object.defineProperty(this, 'eventname', {
+		get: function() {
+			return refs.eventname || 'logging';
+		},
+		set: function(value) {}
+	});
+
+	Object.defineProperty(this, 'websocket', {
+		get: function() {
+			if (refs.socket) return refs.socket;
+			return { emit: function() {} };
+		},
+		set: function(value) {}
+	});
+
+	this.init(params);
+}
+
+Logger.prototype.init = function(params) {
+	params = params || {};
+	var self = this, refs = self.__state__ = self.__state__ || {};
+	if (params.eventname) {
+		refs.eventname = params.eventname;
+	}
+	var mysocket = params.websocket || params.socket;
+	if (typeof(mysocket) === 'object' && typeof(mysocket.emit) === 'function') {
+		refs.socket = mysocket;
+	}
+}
+
+Logger.prototype.log = function(level, payload) {
+	if (typeof(payload) === 'function') {
+		payload = payload.call(null);
+	}
+	this.websocket.emit(this.eventname, {
+		level: level,
+		data: payload
+	});
+};
+
+var instance = null;
+Logger.getInstance = function(params) {
+	instance = instance || new Logger(params);
+	return instance;
+}
+
+Logger.LEVEL_FATAL = 'FATAL';
+Logger.LEVEL_ERROR = 'ERROR';
+Logger.LEVEL_DEBUG = 'DEBUG';
+
+module.exports = Logger;
+
+},{}],34:[function(require,module,exports){
+module.exports = require('./lib/flow');
+
+},{"./lib/flow":36}],35:[function(require,module,exports){
+(function (process,global){
+'use strict';
+
+var debugPkg = require('debug');
+var DEBUG_ENABLED = process && process.env && process.env.DEBUG && (process.env.DEBUG.length > 0) || 
+		global.localStorage && global.localStorage.debug && (global.localStorage.debug.length > 0);
 var debug = module.exports = function(pkgName) {
 	return DEBUG_ENABLED ? debugPkg(pkgName) : null;
 };
 
-},{"debug":29}],33:[function(require,module,exports){
-module.exports=require(32)
-},{"debug":29}],34:[function(require,module,exports){
+}).call(this,require("+7ZJp0"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"+7ZJp0":38,"debug":29}],36:[function(require,module,exports){
 'use strict';
 
-var debug = require('./debug.js')('geotool:loadsync');
+var debug = require('./debug.js')('loadsync:Flow');
+var Step = require('./step');
 
-var loadsync = function loadsync(params) {
+var Flow = function Flow(steps) {
 	debug && debug(' + constructor begin ...');
 	var self = this;
+	steps = steps || [];
+	
+	var validate = function(data, throwException) {
+		var ok = true;
+		if (!(data instanceof Array)) ok = false;
+		if (!(data.length > 0)) ok = false;
+		for(var idx = 0; idx<data.length; idx++) {
+			var item = data[idx] || {};
+			if (!(item.name instanceof String) && !(item.name.length > 0)) {
+				ok = false;
+				break;
+			}
+			if (!(item.cards instanceof Array)) {
+				ok = false;
+				break;
+			}
+		}
+		if (!ok) {
+			if (throwException) throw new Error();
+		}
+		return ok;
+	}
 
-	params = params || {};
-	params.states = params.states || [];
-	params.timeout = params.timeout || 0;
+	var stepObjects = {};
+
+	this.reset = function(steps) {
+		steps = steps || [];
+		debug && debug('steps: %s', JSON.stringify(steps, null, 2));
+		if (!validate(steps)) {
+			debug && debug('invalid reset() parameters');
+			return;
+		}
+		Object.keys(stepObjects).forEach(function(stepName) {
+			stepObjects[stepName].reset();
+			delete stepObjects[stepName];
+		});
+		steps.forEach(function(step) {
+			stepObjects[step.name] = new Step(step);
+			stepObjects[step.name].reset(step);
+		});
+		debug && debug('stepKeys: %s', JSON.stringify(Object.keys(stepObjects)));
+	};
+
+	['ready', 'check'].forEach(function(methodName) {
+		debug && debug('methodName: %s', methodName);
+		self[methodName] = function(card, step) {
+			if (debug && methodName === 'check') {
+				debug && debug('card: %s / step: %s', card, step);
+			}
+			var method = stepObjects[step] && stepObjects[step][methodName];
+			return (method) ? method.call(stepObjects[step], card) : unresetd;
+		}
+	});
+
+	this.reset(steps);
+
+	debug && debug(' - constructor end!');
+};
+
+var instance = null;
+Flow.singleton = function() {
+	instance = instance || new Flow();
+}
+
+module.exports = Flow;
+
+},{"./debug.js":35,"./step":37}],37:[function(require,module,exports){
+'use strict';
+
+var debug = require('./debug.js')('loadsync:Step');
+
+var Step = function Step(params) {
+	debug && debug(' + constructor begin ...');
+
+	var self = this;
+	var state = { cards: [], timeout: 0 };
 
 	var timeoutHandler = null;
 	var initTimeoutHandler = function(timeout) {
@@ -2206,25 +2380,22 @@ var loadsync = function loadsync(params) {
 				clearTimeout(timeoutHandler);
 				timeoutHandler = null;
 			}
-			params.timeout = timeout;
-			if (params.timeout > 0) {
+			state.timeout = timeout;
+			if (state.timeout > 0) {
 				timeoutHandler = setTimeout(function() {
-					params.states = [];
+					state.cards = [];
 					self.check();
-				}, params.timeout);	
+				}, state.timeout);	
 			}
 		}
 	}
 
-	this.define = function(opts) {
-		opts = opts || {};
-		debug && debug('define: %s', JSON.stringify(opts));
+	this.reset = function(params) {
+		params = params || {};
+		debug && debug('reset: %s', JSON.stringify(params));
 
-		if (opts.states instanceof Array) {
-			params.states = opts.states || params.states;
-		}
-
-		initTimeoutHandler(opts.timeout);
+		state.cards = (params.cards instanceof Array) ? params.cards : [];
+		initTimeoutHandler(params.timeout || 0);
 
 		return this;
 	}
@@ -2238,29 +2409,33 @@ var loadsync = function loadsync(params) {
 		return this.check();
 	}
 
-	this.check = function(state) {
-		debug && debug('check state: %s', state);
-		var stateInd = params.states.indexOf(state);
-		if (stateInd >= 0) {
-			params.states.splice(stateInd, 1);
+	this.check = function(card) {
+		debug && debug('check card: %s', card || 'N/A');
+		var cardInd = state.cards.indexOf(card);
+		if (cardInd >= 0) {
+			state.cards.splice(cardInd, 1);
 		}
-		if (params.states.length === 0) {
+		if (state.cards.length === 0) {
 			debug && debug('ready, run all of callbacks');
-			callbacks.forEach(function(callback) {
-				callback();
-			});
+			var cbs = callbacks || [];
+			callbacks = [];
+			if (cbs.length > 0) {
+				cbs.forEach(function(callback) {
+					callback();
+				});
+			}
 		}
 		return this;
 	}
 
-	initTimeoutHandler(params.timeout);
+	this.reset(params);
 
 	debug && debug(' - constructor end!');
 };
 
-module.exports = new loadsync();
+module.exports = Step;
 
-},{"./debug.js":33}],35:[function(require,module,exports){
+},{"./debug.js":35}],38:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -2325,7 +2500,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],36:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -2344,7 +2519,7 @@ define(function (require) {
 });
 })(typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); });
 
-},{"./Scheduler":37,"./env":49,"./makePromise":51}],37:[function(require,module,exports){
+},{"./Scheduler":40,"./env":52,"./makePromise":54}],40:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -2426,7 +2601,7 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],38:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -2454,7 +2629,7 @@ define(function() {
 	return TimeoutError;
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
-},{}],39:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -2511,7 +2686,7 @@ define(function() {
 
 
 
-},{}],40:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -2802,7 +2977,7 @@ define(function(require) {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
 
-},{"../apply":39,"../state":52}],41:[function(require,module,exports){
+},{"../apply":42,"../state":55}],44:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -2964,7 +3139,7 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],42:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -2993,7 +3168,7 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],43:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -3015,7 +3190,7 @@ define(function(require) {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
 
-},{"../state":52}],44:[function(require,module,exports){
+},{"../state":55}],47:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -3082,7 +3257,7 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],45:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -3108,7 +3283,7 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],46:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -3188,7 +3363,7 @@ define(function(require) {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
 
-},{"../TimeoutError":38,"../env":49}],47:[function(require,module,exports){
+},{"../TimeoutError":41,"../env":52}],50:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -3276,7 +3451,7 @@ define(function(require) {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
 
-},{"../env":49,"../format":50}],48:[function(require,module,exports){
+},{"../env":52,"../format":53}],51:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -3316,7 +3491,7 @@ define(function() {
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
 
-},{}],49:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 (function (process){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
@@ -3393,7 +3568,7 @@ define(function(require) {
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(require); }));
 
 }).call(this,require("+7ZJp0"))
-},{"+7ZJp0":35}],50:[function(require,module,exports){
+},{"+7ZJp0":38}],53:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -3451,7 +3626,7 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],51:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 (function (process){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
@@ -4382,7 +4557,7 @@ define(function() {
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
 }).call(this,require("+7ZJp0"))
-},{"+7ZJp0":35}],52:[function(require,module,exports){
+},{"+7ZJp0":38}],55:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 /** @author Brian Cavalier */
 /** @author John Hann */
@@ -4419,7 +4594,7 @@ define(function() {
 });
 }(typeof define === 'function' && define.amd ? define : function(factory) { module.exports = factory(); }));
 
-},{}],53:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 /** @license MIT License (c) copyright 2010-2014 original author or authors */
 
 /**
@@ -4649,4 +4824,4 @@ define(function (require) {
 });
 })(typeof define === 'function' && define.amd ? define : function (factory) { module.exports = factory(require); });
 
-},{"./lib/Promise":36,"./lib/TimeoutError":38,"./lib/apply":39,"./lib/decorators/array":40,"./lib/decorators/flow":41,"./lib/decorators/fold":42,"./lib/decorators/inspect":43,"./lib/decorators/iterate":44,"./lib/decorators/progress":45,"./lib/decorators/timed":46,"./lib/decorators/unhandledRejection":47,"./lib/decorators/with":48}]},{},[1])
+},{"./lib/Promise":39,"./lib/TimeoutError":41,"./lib/apply":42,"./lib/decorators/array":43,"./lib/decorators/flow":44,"./lib/decorators/fold":45,"./lib/decorators/inspect":46,"./lib/decorators/iterate":47,"./lib/decorators/progress":48,"./lib/decorators/timed":49,"./lib/decorators/unhandledRejection":50,"./lib/decorators/with":51}]},{},[1])

@@ -11,25 +11,30 @@
 		// enable debug
 		localStorage.debug = 'geotool*';
 		
-		// create geodetector instance 
-		var geodetector = new geotool.Detector({});
-		
-		// request detect() method
 		var customizedCheckers = [{
 			url: 'https://freegeoip.net/json/',
 			transform: function(data) {
 				return { country_code: data && data.country_code }
 			}
 		}, {
-			url: 'https://freegeoip.net/json/',
+			url: 'http://geomapis.lab.qup.vn/geotool/geoip',
 			transform: function(data) {
-				return { country_code: data && data.country_code }
+				return { country_code: data && data.country && data.country.iso_code }
 			}
 		}];
 
-		geodetector.detect({
-			// geoipCheckers: customizedCheckers
-		}, function(error, result) {
+		// create geodetector instance 
+		var geodetector = new geotool.Detector({
+			geoipCheckers: [{
+				url: 'http://geomapis.lab.qup.vn/geotool/geoip',
+				transform: function(data) {
+					return { country_code: data && data.country && data.country.iso_code }
+				}
+			}]
+		});
+		
+		// request detect() method
+		geodetector.detect({}, function(error, result) {
 			if (error) {
 				console.log("Error: %s", JSON.stringify(error));
 				return;
